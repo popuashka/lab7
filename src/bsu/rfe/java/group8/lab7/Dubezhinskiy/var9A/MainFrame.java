@@ -148,3 +148,66 @@ public class MainFrame extends JFrame {
             }
         }).start();
     }
+    private void sendMessage() {
+        try {
+// Получаем необходимые параметры
+            final String senderName = textFieldFrom.getText();
+            final String destinationAddress = textFieldTo.getText();
+            final String message = textAreaOutgoing.getText();
+// Убеждаемся, что поля не пустые
+            if (senderName.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Введите имя отправителя", "Ошибка",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (destinationAddress.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Введите адрес узла-получателя", "Ошибка",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (message.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Введите текст сообщения", "Ошибка",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+// Создаем сокет для соединения
+            final Socket socket = new Socket(destinationAddress, SERVER_PORT);
+// Открываем поток вывода данных
+            final DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+// Записываем в поток имя
+            out.writeUTF(senderName);
+// Записываем в поток сообщение
+            out.writeUTF(message);
+// Закрываем сокет
+            socket.close();
+// Помещаем сообщения в текстовую область вывода
+            textAreaIncoming.append("Я -> " + destinationAddress + ": " + message + "\n");
+// Очищаем текстовую область ввода сообщения
+            textAreaOutgoing.setText("");
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(MainFrame.this,
+                    "Не удалось отправить сообщение: IP-адрес введен не правильно, он должен сосотоять из 4 чисел в диапозоне от 0 до 255", "Ошибка", JOptionPane.ERROR_MESSAGE);
+            textFieldTo.setText("");
+            textFieldTo.requestFocusInWindow();
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(MainFrame.this, "Не удалось отправить сообщение", "Ошибка",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                final MainFrame frame = new MainFrame();
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                frame.setVisible(true);
+            }
+        });
+    }
+}
