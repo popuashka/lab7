@@ -117,3 +117,34 @@ public class MainFrame extends JFrame {
                 .addGap(MEDIUM_GAP)
                 .addComponent(messagePanel)
                 .addContainerGap());
+        // Создание и запуск потока-обработчика запросов
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final ServerSocket serverSocket = new ServerSocket(SERVER_PORT);
+                    while (!Thread.interrupted()) {
+                        final Socket socket = serverSocket.accept();
+                        final DataInputStream in = new DataInputStream(socket.getInputStream());
+// Читаем имя отправителя
+                        final String senderName = in.readUTF();
+// Читаем сообщение
+                        final String message = in.readUTF();
+// Закрываем соединение
+                        socket.close();
+// Выделяем IP-адрес
+                        final String address = ((InetSocketAddress) socket.getRemoteSocketAddress())
+                                .getAddress()
+                                .getHostAddress();
+// Выводим сообщение в текстовую область
+                        textAreaIncoming.append(senderName + " (" + address + "): " + message + "\n");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(MainFrame.this,
+                            "Ошибка в работе сервера", "Ошибка",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }).start();
+    }
